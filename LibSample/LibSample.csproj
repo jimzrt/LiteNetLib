@@ -41,6 +41,8 @@
   <ItemGroup>
     <Compile Include="BroadcastTest.cs" />
     <Compile Include="EchoMessagesTest.cs" />
+    <Compile Include="GameRelayServer.cs" />
+    <Compile Include="GameRelayServerTest.cs" />
     <Compile Include="GithubSample.cs" />
     <Compile Include="HolePunchServerTest.cs" />
     <Compile Include="PacketProcessorExample.cs" />

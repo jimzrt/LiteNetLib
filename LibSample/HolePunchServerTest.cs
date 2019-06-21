@@ -29,13 +29,13 @@ namespace LibSample
     {
         private const int ServerPort = 50010;
         private const string ConnectionKey = "test_key";
-        private static readonly TimeSpan KickTime = new TimeSpan(0, 0, 6);
+        private static readonly TimeSpan KickTime = new TimeSpan(0, 1, 6);
 
         private readonly Dictionary<string, WaitPeer> _waitingPeers = new Dictionary<string, WaitPeer>();
         private readonly List<string> _peersToRemove = new List<string>();
         private NetManager _puncher;
-        private NetManager _c1;
-        private NetManager _c2;
+      //  private NetManager _c1;
+       // private NetManager _c2;
 
         void INatPunchListener.OnNatIntroductionRequest(IPEndPoint localEndPoint, IPEndPoint remoteEndPoint, string token)
         {
@@ -88,7 +88,7 @@ namespace LibSample
             
             EventBasedNetListener netListener = new EventBasedNetListener();
             EventBasedNatPunchListener natPunchListener1 = new EventBasedNatPunchListener();
-            EventBasedNatPunchListener natPunchListener2 = new EventBasedNatPunchListener();
+            //EventBasedNatPunchListener natPunchListener2 = new EventBasedNatPunchListener();
 
             netListener.PeerConnectedEvent += peer =>
             {
@@ -109,35 +109,36 @@ namespace LibSample
                 }
             };
 
-            natPunchListener1.NatIntroductionSuccess += (point, token) =>
-            {
-                var peer = _c1.Connect(point, ConnectionKey);
-                Console.WriteLine("Success C1. Connecting to C2: {0}, connection created: {1}", point, peer != null);
-            };
+            //natPunchListener1.NatIntroductionSuccess += (point, token) =>
+            //{
+            //    var peer = _c1.Connect(point, ConnectionKey);
+            //    Console.WriteLine("Success C1. Connecting to C2: {0}, connection created: {1}", point, peer != null);
+            //};
 
-            natPunchListener2.NatIntroductionSuccess += (point, token) =>
-            {
-                var peer = _c2.Connect(point, ConnectionKey);
-                Console.WriteLine("Success C2. Connecting to C1: {0}, connection created: {1}", point, peer != null);
-            };
+            //natPunchListener2.NatIntroductionSuccess += (point, token) =>
+            //{
+            //    var peer = _c2.Connect(point, ConnectionKey);
+            //    Console.WriteLine("Success C2. Connecting to C1: {0}, connection created: {1}", point, peer != null);
+            //};
 
-            _c1 = new NetManager(netListener);
-            _c1.NatPunchEnabled = true;
-            _c1.NatPunchModule.Init(natPunchListener1);
-            _c1.Start();
+            //_c1 = new NetManager(netListener);
+            //_c1.NatPunchEnabled = true;
+            //_c1.NatPunchModule.Init(natPunchListener1);
+            //_c1.Start();
 
-            _c2 = new NetManager(netListener);
-            _c2.NatPunchEnabled = true;
-            _c2.NatPunchModule.Init(natPunchListener2);
-            _c2.Start();
+            //_c2 = new NetManager(netListener);
+            //_c2.NatPunchEnabled = true;
+            //_c2.NatPunchModule.Init(natPunchListener2);
+            //_c2.Start();
 
             _puncher = new NetManager(netListener);
+           // _puncher.IPv6Enabled = false;
             _puncher.Start(ServerPort);
             _puncher.NatPunchEnabled = true;
             _puncher.NatPunchModule.Init(this);
 
-            _c1.NatPunchModule.SendNatIntroduceRequest(NetUtils.MakeEndPoint("::1", ServerPort), "token1");
-            _c2.NatPunchModule.SendNatIntroduceRequest(NetUtils.MakeEndPoint("::1", ServerPort), "token1");
+            //_c1.NatPunchModule.SendNatIntroduceRequest(NetUtils.MakeEndPoint("::1", ServerPort), "token1");
+            //_c2.NatPunchModule.SendNatIntroduceRequest(NetUtils.MakeEndPoint("::1", ServerPort), "token1");
 
             // keep going until ESCAPE is pressed
             Console.WriteLine("Press ESC to quit");
@@ -151,21 +152,21 @@ namespace LibSample
                     {
                         break;
                     }
-                    if (key == ConsoleKey.A)
-                    {
-                        Console.WriteLine("C1 stopped");
-                        _c1.DisconnectPeer(_c1.FirstPeer, new byte[] {1,2,3,4});
-                        _c1.Stop();
-                    }
+                    //if (key == ConsoleKey.A)
+                    //{
+                    //    Console.WriteLine("C1 stopped");
+                    //    _c1.DisconnectPeer(_c1.FirstPeer, new byte[] {1,2,3,4});
+                    //    _c1.Stop();
+                    //}
                 }
                 
                 DateTime nowTime = DateTime.Now;
 
-                _c1.NatPunchModule.PollEvents();
-                _c2.NatPunchModule.PollEvents();
+                //_c1.NatPunchModule.PollEvents();
+                //_c2.NatPunchModule.PollEvents();
                 _puncher.NatPunchModule.PollEvents();
-                _c1.PollEvents();
-                _c2.PollEvents();
+                //_c1.PollEvents();
+                //_c2.PollEvents();
 
                 //check old peers
                 foreach (var waitPeer in _waitingPeers)
@@ -187,8 +188,8 @@ namespace LibSample
                 Thread.Sleep(10);
             }
 
-            _c1.Stop();
-            _c2.Stop();
+            //_c1.Stop();
+            //_c2.Stop();
             _puncher.Stop();
         }
     }

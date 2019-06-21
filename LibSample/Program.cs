@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using LiteNetLib.Utils;
 
 namespace LibSample
@@ -19,13 +20,19 @@ namespace LibSample
             });
             ntpRequest.Send();
 
-            new EchoMessagesTest().Run();
-            //new HolePunchServerTest().Run();
-            //new BroadcastTest().Run();
-            //new BenchmarkTest.TestHost().Run();
-            //new SerializerBenchmark().Run();
-            //new SpeedBench().Run();
-            //new PacketProcessorExample().Run();
+            Random random = new Random();
+            var gameServer = new GameRelayServer();
+             new Thread(new ThreadStart(gameServer.Run)).Start();
+            Thread.Sleep(1000);
+            Console.WriteLine("Starting Client");
+            var gameServerTest = new GameRelayServerTest();
+            for(int i = 0; i < 1000; i++)
+            {
+                new Thread(new ThreadStart(gameServerTest.Run)).Start();
+                Thread.Sleep(random.Next(1000));
+            }
+           
+
         }
     }
 }
