@@ -2,7 +2,6 @@
 using LiteNetLib.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,32 +13,19 @@ using static LibSample.GameRelayServer;
 namespace LibSample
 {
 
-
-    class GameRelayServerTest
+    class GameRelayClient
     {
-
         Dictionary<int, Player> playersLobby = new Dictionary<int, Player>();
         Dictionary<int, Player> playersRoom = new Dictionary<int, Player>();
+        NetManager _netClient;
 
-        public static string GenerateName(int len)
+        public void PollNetwork()
         {
-            Random r = new Random();
-            string[] consonants = { "b", "c", "d", "f", "g", "h", "j", "k", "l", "m", "l", "n", "p", "q", "r", "s", "sh", "zh", "t", "v", "w", "x" };
-            string[] vowels = { "a", "e", "i", "o", "u", "ae", "y" };
-            string Name = "";
-            Name += consonants[r.Next(consonants.Length)].ToUpper();
-            Name += vowels[r.Next(vowels.Length)];
-            int b = 2; //b tells how many times a new letter has been added. It's 2 right now because the first two letters are already in the name.
-            while (b < len)
+            while (true)
             {
-                Name += consonants[r.Next(consonants.Length)];
-                b++;
-                Name += vowels[r.Next(vowels.Length)];
-                b++;
+                _netClient.PollEvents();
+                Thread.Sleep(10);
             }
-
-            return Name;
-
 
         }
 
@@ -81,16 +67,17 @@ namespace LibSample
                         {
                             player = playersLobby[playerId];
                             player.Name = playerName;
-                        } 
+                        }
                         else if (playersRoom.ContainsKey(playerId))
                         {
                             player = playersRoom[playerId];
                             player.Name = playerName;
-                        } else
+                        }
+                        else
                         {
                             throw new Exception("Player neither in lobbyPlayers nor in roomPlayers");
                         }
-                        
+
                         break;
                     case RequestType.PlayerLobbyJoined:
                         playerId = reader.GetInt();
@@ -114,7 +101,7 @@ namespace LibSample
                         break;
                     case RequestType.LobbyInformation:
                         var lobbyCount = reader.GetInt();
-                        for(int i = 0; i < lobbyCount; i++)
+                        for (int i = 0; i < lobbyCount; i++)
                         {
                             playerId = reader.GetInt();
                             playerName = reader.GetString();
@@ -130,7 +117,7 @@ namespace LibSample
                         break;
                     case RequestType.RoomUpdate:
                         break;
-                    case RequestType.RoomInformation:      
+                    case RequestType.RoomInformation:
                         break;
                     case RequestType.JoinRoom:
                         var success = reader.GetBool();
@@ -153,7 +140,7 @@ namespace LibSample
             };
 
 
-            var _netClient = new NetManager(netListener);
+            _netClient = new NetManager(netListener);
             var _dataWriter = new NetDataWriter();
 
             var random = new Random();
@@ -163,64 +150,92 @@ namespace LibSample
             _netClient.Start();
             _netClient.Connect(ipAddress, 50010, "test_key");
 
-            int waitTime = random.Next(10000);
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-            while(stopWatch.ElapsedMilliseconds < waitTime)
+            new Thread(new ThreadStart(PollNetwork)).Start();
+
+
+            while (true)
             {
-                _netClient.PollEvents();
-                Thread.Sleep(15);
+
+                var input = Console.ReadLine();
+                var input_arr = input.Split(' ');
+                var command = input_arr[0];
+                if (command == "name")
+                {
+                    var name = input_arr[1];
+                    _dataWriter.Put((byte)RequestType.PlayerUpdateName);
+                    _dataWriter.Put(name);
+                    _netClient.SendToAll(_dataWriter, DeliveryMethod.ReliableOrdered);
+                    _dataWriter.Reset();
+                }
+                else if (command == "create_room")
+                {
+
+                    _dataWriter.Put((byte)RequestType.CreateRoom);
+                    _netClient.SendToAll(_dataWriter, DeliveryMethod.ReliableOrdered);
+                    _dataWriter.Reset();
+
+                }
+                else if (command == "join_room")
+                {
+                    if (!Int32.TryParse(input_arr[1], out int roomNumber))
+                    {
+                        Console.WriteLine("Parameter has to be a integer!");
+                        continue;
+                    }
+                    _dataWriter.Put((byte)RequestType.JoinRoom);
+                    _dataWriter.Put(roomNumber);
+                    _netClient.SendToAll(_dataWriter, DeliveryMethod.ReliableOrdered);
+                    _dataWriter.Reset();
+
+
+                }
+                else if (command == "diag")
+                {
+                    PPrintPlayerLobby();
+                    PPintPlayerRoom();
+                }
+                else if (command == "quit" || command == "exit")
+                {
+                    Console.WriteLine("goodbye!");
+                    _netClient.DisconnectAll();
+                    Console.ReadLine();
+                    Environment.Exit(0);
+                }
+
+
+
+
+
+
             }
-            stopWatch.Reset();
 
 
-            var randomName = GenerateName(8);
-            _dataWriter.Put((byte)GameRelayServer.RequestType.PlayerUpdateName);
-            _dataWriter.Put(randomName);
-            _netClient.SendToAll(_dataWriter, DeliveryMethod.ReliableOrdered);
-            _dataWriter.Reset();
 
 
-            waitTime = random.Next(30000);
-            stopWatch = new Stopwatch();
-            stopWatch.Start();
-            while (stopWatch.ElapsedMilliseconds < waitTime)
-            {
-                _netClient.PollEvents();
-                Thread.Sleep(15);
-            }
-            stopWatch.Reset();
 
-
-            GameRelayServer.RequestType requestType;
-            if(random.Next(10) >= 5)
-            {
-                requestType = GameRelayServer.RequestType.CreateRoom;
-                _dataWriter.Put((byte)requestType);
-                _netClient.SendToAll(_dataWriter, DeliveryMethod.ReliableOrdered);
-            } else
-            {
-                requestType = GameRelayServer.RequestType.JoinRoom;
-                var roomNumber = random.Next(20);
-                _dataWriter.Put((byte)requestType);
-                _dataWriter.Put(roomNumber);
-                _netClient.SendToAll(_dataWriter, DeliveryMethod.ReliableOrdered);
-            }
-
-            waitTime = random.Next(30000);
-            stopWatch = new Stopwatch();
-            stopWatch.Start();
-            while (stopWatch.ElapsedMilliseconds < waitTime)
-            {
-                _netClient.PollEvents();
-                Thread.Sleep(15);
-            }
-            stopWatch.Reset();
-
-            _dataWriter.Reset();
-            _netClient.DisconnectAll();
 
         }
 
+        private void PPintPlayerRoom()
+        {
+            Console.WriteLine("-----Lobby----");
+            Console.WriteLine("count: {0}", playersLobby.Count);
+            foreach (var entry in playersLobby)
+            {
+                Console.WriteLine("id: {0} - name {1}", entry.Key, entry.Value.Name);
+            }
+            Console.WriteLine("-------------");
+        }
+
+        private void PPrintPlayerLobby()
+        {
+            Console.WriteLine("-----Room----");
+            Console.WriteLine("count: {0}", playersRoom.Count);
+            foreach (var entry in playersRoom)
+            {
+                Console.WriteLine("id: {0} - name {1}", entry.Key, entry.Value.Name);
+            }
+            Console.WriteLine("-------------");
+        }
     }
 }

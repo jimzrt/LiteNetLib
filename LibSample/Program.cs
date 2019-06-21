@@ -9,28 +9,36 @@ namespace LibSample
         static void Main(string[] args)
         {
             //Test ntp
-            NtpRequest ntpRequest = null;
-            ntpRequest = NtpRequest.Create("pool.ntp.org", ntpPacket =>
-            {
-                ntpRequest.Close();
-                if (ntpPacket != null)
-                    Console.WriteLine("[MAIN] NTP time test offset: " + ntpPacket.CorrectionOffset);
-                else
-                    Console.WriteLine("[MAIN] NTP time error");
-            });
-            ntpRequest.Send();
+            //NtpRequest ntpRequest = null;
+            //ntpRequest = NtpRequest.Create("pool.ntp.org", ntpPacket =>
+            //{
+            //    ntpRequest.Close();
+            //    if (ntpPacket != null)
+            //        Console.WriteLine("[MAIN] NTP time test offset: " + ntpPacket.CorrectionOffset);
+            //    else
+            //        Console.WriteLine("[MAIN] NTP time error");
+            //});
+            //ntpRequest.Send();
 
-            Random random = new Random();
-            var gameServer = new GameRelayServer();
-             new Thread(new ThreadStart(gameServer.Run)).Start();
-            Thread.Sleep(1000);
-            Console.WriteLine("Starting Client");
-            var gameServerTest = new GameRelayServerTest();
-            for(int i = 0; i < 1000; i++)
-            {
-                new Thread(new ThreadStart(gameServerTest.Run)).Start();
-                Thread.Sleep(random.Next(1000));
-            }
+            //      Random random = new Random();
+
+            //     var gameClient = new GameRelayClient();
+            //   gameClient.Run();
+
+          //  new GameRelayClient().Run();
+           new GameRelayServer().Run();
+
+
+
+         //    new Thread(new ThreadStart(gameServer.Run)).Start();
+         //   Thread.Sleep(1000);
+         //   Console.WriteLine("Starting Client");
+         ////   var gameServerTest = new GameRelayServerTest();
+         //   for(int i = 0; i < 1000; i++)
+         //   {
+         //       new Thread(new ThreadStart(new GameRelayServerTest().Run)).Start();
+         //       Thread.Sleep(random.Next(1000));
+         //   }
            
 
         }

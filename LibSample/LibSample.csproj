@@ -41,11 +41,13 @@
   <ItemGroup>
     <Compile Include="BroadcastTest.cs" />
     <Compile Include="EchoMessagesTest.cs" />
+    <Compile Include="GameRelayClient.cs" />
     <Compile Include="GameRelayServer.cs" />
     <Compile Include="GameRelayServerTest.cs" />
     <Compile Include="GithubSample.cs" />
     <Compile Include="HolePunchServerTest.cs" />
     <Compile Include="PacketProcessorExample.cs" />
+    <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializerBenchmark.cs" />
